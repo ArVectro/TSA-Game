@@ -53,7 +53,7 @@ while run:
     # If right arrow key is pressed
     if keys[pygame.K_RIGHT] and x < 1000 - width: 
         print(f"{x - vel} <{ obstacle_x + obstacle_width } and {x + width}> {obstacle_x } and {y+height} > {obstacle_y } and {y} < {obstacle_y + obstacle_height} ")
-        # Check if moving right would overlap the obstacle
+        # Check if moving right would overlap the obstacle2
         if not (x - vel < obstacle_x + obstacle_width and x + width > obstacle_x and y + height > obstacle_y and y < obstacle_y + obstacle_height):
             x += vel
          
