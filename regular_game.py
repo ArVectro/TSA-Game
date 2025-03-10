@@ -16,6 +16,8 @@ y = 200
 width = 32
 height = 32
 
+
+
 # Velocity / speed of movement 
 vel = 2.5
   
@@ -47,26 +49,26 @@ while run:
     # If left arrow key is pressed 
     if keys[pygame.K_LEFT] and x > 0: 
         # Check if moving left would overlap the obstacle
-        if not (x - vel < obstacle_x + obstacle_width and x + width > obstacle_x and y + height > obstacle_y and y - vel < obstacle_y + obstacle_height):
+        if not (x - vel < obstacle_x + obstacle_width and x - vel + width > obstacle_x and y + height > obstacle_y and y < obstacle_y + obstacle_height):
             x -= vel
           
     # If right arrow key is pressed
     if keys[pygame.K_RIGHT] and x < 1000 - width: 
         print(f"{x - vel} <{ obstacle_x + obstacle_width } and {x + width}> {obstacle_x } and {y+height} > {obstacle_y } and {y} < {obstacle_y + obstacle_height} ")
         # Check if moving right would overlap the obstacle2
-        if not (x - vel < obstacle_x + obstacle_width and x + width > obstacle_x and y + height > obstacle_y and y < obstacle_y + obstacle_height):
+        if not (x + vel < obstacle_x + obstacle_width and x + vel + width > obstacle_x and y + height > obstacle_y and y < obstacle_y + obstacle_height):
             x += vel
          
     # If up arrow key is pressed  
     if keys[pygame.K_UP] and y > 0: 
         # Check if moving up would overlap the obstacle
-        if not (x + width > obstacle_x and x < obstacle_x + obstacle_width and y - vel < obstacle_y + obstacle_height and y + height > obstacle_y):
+        if not (x + width > obstacle_x and x < obstacle_x + obstacle_width and y - vel < obstacle_y + obstacle_height and y - vel + height > obstacle_y):
             y -= vel
                   
     # If down arrow key is pressed    
     if keys[pygame.K_DOWN] and y < 1000 - height: 
         # Check if moving down would overlap the obstacle
-        if not (x + width > obstacle_x and x < obstacle_x + obstacle_width and y - vel < obstacle_y + obstacle_height and y + height > obstacle_y):
+        if not (x + width > obstacle_x and x < obstacle_x + obstacle_width and y + vel < obstacle_y + obstacle_height and y + vel + height > obstacle_y):
             y += vel 
 
     # Background
