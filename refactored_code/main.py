@@ -15,14 +15,16 @@ class Player:
         self.width = width
         self.height = height
         self.vel = vel  # Speed of movement
+        self.inventory = []  # List to store collected items
 
-    def move(self, keys, obstacles):
+    def move(self, keys, obstacles, items):
         """
-        Handles player movement while avoiding obstacles.
+        Handles player movement while avoiding obstacles and collecting items.
 
         Parameters:
         - keys: Pressed keys from pygame.key.get_pressed()
         - obstacles: List of obstacle objects to check for collision
+        - items: List of item objects to check for collection
         """
         if keys[pygame.K_LEFT] and self.x > 0 and self.can_move(self.x - self.vel, self.y, obstacles):
             self.x -= self.vel  # Move left
@@ -32,6 +34,8 @@ class Player:
             self.y -= self.vel  # Move up
         if keys[pygame.K_DOWN] and self.y < 1000 - self.height and self.can_move(self.x, self.y + self.vel, obstacles):
             self.y += self.vel  # Move down
+        
+        self.collect_items(items)  # Check if player collects any items
 
     def can_move(self, new_x, new_y, obstacles):
         """
@@ -48,6 +52,19 @@ class Player:
             if obstacle.collides_with(new_x, new_y, self.width, self.height):
                 return False  # Block movement if collision detected
         return True
+
+    def collect_items(self, items):
+        """
+        Checks if the player collides with any items and collects them.
+
+        Parameters:
+        - items: List of item objects to check for collection
+        """
+        for item in items[:]:
+            if item.collides_with(self.x, self.y, self.width, self.height):
+                self.inventory.append(item)  # Add the item to player's inventory
+                items.remove(item)  # Remove item from the game
+                print(f"Money collected! Inventory: {len(self.inventory)} items.")  # Feedback
 
     def draw(self, screen):
         """
@@ -94,10 +111,46 @@ class Obstacle:
         """
         return x < self.x + self.width and x + width > self.x and y < self.y + self.height and y + height > self.y
 
+class Item:
+    def __init__(self, x, y, width, height):
+        """
+        Initializes an item to be collected.
+        
+        Parameters:
+        - x, y: Position of the item
+        - width, height: Size of the item
+        """
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+    def draw(self, screen):
+        """
+        Draws the item on the screen.
+
+        Parameters:
+        - screen: The game screen where the item will be drawn
+        """
+        pygame.draw.rect(screen, (0, 255, 0), (self.x, self.y, self.width, self.height))  # Green color
+
+    def collides_with(self, x, y, width, height):
+        """
+        Checks if a given rectangle (player) collides with this item.
+
+        Parameters:
+        - x, y: Position of the rectangle
+        - width, height: Size of the rectangle
+
+        Returns:
+        - True if there's a collision, False otherwise
+        """
+        return x < self.x + self.width and x + width > self.x and y < self.y + self.height and y + height > self.y
+
 class Game:
     def __init__(self):
         """
-        Initializes the game, including the window, player, and obstacles.
+        Initializes the game, including the window, player, obstacles, and items.
         """
         pygame.init()  # Initialize pygame
         self.screen = pygame.display.set_mode((1000, 1000))  # Create a 1000x1000 window
@@ -112,6 +165,14 @@ class Game:
             Obstacle(300, 300, 150, 150),  # Obstacle 2
             Obstacle(700, 200, 120, 180)   # Obstacle 3
         ]
+
+        # Create multiple items
+        self.items = [
+            Item(400, 400, 20, 20),  # Item 1
+            Item(600, 300, 20, 20),  # Item 2
+            Item(800, 600, 20, 20)   # Item 3
+        ]
+        self.font = pygame.font.SysFont('Arial', 24)  # Choose the font and size
 
         self.run = True  # Game loop flag
 
@@ -128,17 +189,24 @@ class Game:
         Updates the game state (e.g., player movement).
         """
         keys = pygame.key.get_pressed()  # Get currently pressed keys
-        self.player.move(keys, self.obstacles)  # Move the player
+        self.player.move(keys, self.obstacles, self.items)  # Move the player and check for item collection
 
     def draw(self):
         """
-        Draws all game elements (background, obstacles, player).
+        Draws all game elements (background, obstacles, items, player).
         """
         self.screen.fill((255, 255, 255))  # White background
         for obstacle in self.obstacles:
             obstacle.draw(self.screen)  # Draw all obstacles
+        for item in self.items:
+            item.draw(self.screen)  # Draw all items
         self.player.draw(self.screen)  # Draw player
         pygame.display.update()  # Refresh the screen
+
+        # In the draw method of the Game class, after drawing the player and obstacles:
+        inventory_text = f"Inventory: {len(self.player.inventory)} items"
+        text_surface = self.font.render(inventory_text, True, (0, 0, 0))  # Black text
+        self.screen.blit(text_surface, (10, 10))  # Position the text on the screen (top-left corner)
 
     def run_game(self):
         """
