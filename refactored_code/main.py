@@ -162,7 +162,7 @@ class Game:
         # Create multiple obstacles
         self.obstacles = [
             Obstacle(500, 500, 200, 100),  # Obstacle 1
-            Obstacle(300, 300, 150, 150),  # Obstacle 2
+            Obstacle(200, 300, 150, 150),  # Obstacle 2
             Obstacle(700, 200, 120, 180)   # Obstacle 3
         ]
 
