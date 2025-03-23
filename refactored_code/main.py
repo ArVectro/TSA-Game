@@ -158,31 +158,40 @@ class Game:
         self.player = Player(200, 200, 32, 32, 2.5)
 
         # Define level configurations with more coins (items)
-        self.levels = [
-            {
-                "obstacles": [
-                    Obstacle(500, 500, 200, 100),
-                    Obstacle(200, 300, 150, 150),
-                    Obstacle(700, 200, 120, 180)
-                ],
-                "items": self.generate_items(30, 20)  # Generate 30 coins for level 1, each of size 20x20
-            },
-            {
-                "obstacles": [
-                    Obstacle(100, 100, 150, 100),
-                    Obstacle(600, 600, 200, 200),
-                    Obstacle(300, 400, 100, 100)
-                ],
-                "items": self.generate_items(50, 20)  # Generate 50 coins for level 2, each of size 20x20
-            },
-            {
-                "obstacles": [
-                    Obstacle(100, 100, 300, 100),
-                    Obstacle(500, 500, 100, 100)
-                ],
-                "items": self.generate_items(70, 20)  # Generate 70 coins for level 3, each of size 20x20
-            }
-        ]
+  # Initialize empty levels first
+        self.levels = []
+
+        # Define levels with obstacles and then generate items
+        level_1 = {
+            "obstacles": [
+                Obstacle(500, 500, 200, 100),
+                Obstacle(200, 300, 150, 150),
+                Obstacle(700, 200, 120, 180)
+            ],
+            "items": self.generate_items(30, 20)  # Now this works
+        }
+
+        level_2 = {
+            "obstacles": [
+                Obstacle(100, 100, 150, 100),
+                Obstacle(600, 600, 200, 200),
+                Obstacle(300, 400, 100, 100)
+            ],
+            "items": self.generate_items(50, 20)
+        }
+
+        level_3 = {
+            "obstacles": [
+                Obstacle(100, 100, 300, 100),
+                Obstacle(500, 500, 100, 100)
+            ],
+            "items": self.generate_items(70, 20)
+        }
+
+        # Add the levels to the levels list
+        self.levels.append(level_1)
+        self.levels.append(level_2)
+        self.levels.append(level_3),
 
         self.font = pygame.font.SysFont('Arial', 24)
         self.current_level = 0
