@@ -18,7 +18,38 @@ class Player:
         self.vel = vel
         self.inventory = []
 
-    def move(self, keys, obstacles, items):
+    def check_wall_collision(self, x, y, width, height, screen_width, screen_height):
+        # Outer walls (building's border)
+        if x < 0 or x + width > screen_width or y < 0 or y + height > screen_height:
+            return True
+
+        room_width = screen_width // 3
+        room_height = screen_height // 2
+        wall_thickness = 10  # Outer walls' thickness
+        inner_wall_thickness = 5  # Inner walls' thickness
+
+        # Check for outer walls
+        if x < wall_thickness or x + width > screen_width - wall_thickness:
+            return True
+        if y < wall_thickness or y + height > screen_height - wall_thickness:
+            return True
+
+        # Check for inner walls between rooms
+        for i in range(3):  # Horizontal rooms
+            for j in range(2):  # Vertical rooms
+                # Check vertical walls
+                if i < 2 and x + width > i * room_width + room_width - inner_wall_thickness and x < i * room_width + room_width:
+                    if y + height > j * room_height and y < j * room_height + room_height:
+                        return True
+
+                # Check horizontal walls
+                if j < 1 and y + height > j * room_height + room_height - inner_wall_thickness and y < j * room_height + room_height:
+                    if x + width > i * room_width and x < i * room_width + room_width:
+                        return True
+
+        return False
+
+    def move(self, keys, obstacles, items, screen_width, screen_height):
         """
         Handles player movement while avoiding obstacles and collecting items.
 
@@ -27,18 +58,19 @@ class Player:
         - obstacles: List of obstacle objects to check for collision
         - items: List of item objects to check for collection
         """
-        if keys[pygame.K_LEFT] and self.x > 0 and self.can_move(self.x - self.vel, self.y, obstacles):
+        # Check if player can move without colliding with walls
+        if keys[pygame.K_LEFT] and self.x > 0 and self.can_move(self.x - self.vel, self.y, obstacles, screen_width, screen_height):
             self.x -= self.vel  # Move left
-        if keys[pygame.K_RIGHT] and self.x < 1000 - self.width and self.can_move(self.x + self.vel, self.y, obstacles):
+        if keys[pygame.K_RIGHT] and self.x < screen_width - self.width and self.can_move(self.x + self.vel, self.y, obstacles, screen_width, screen_height):
             self.x += self.vel  # Move right
-        if keys[pygame.K_UP] and self.y > 0 and self.can_move(self.x, self.y - self.vel, obstacles):
+        if keys[pygame.K_UP] and self.y > 0 and self.can_move(self.x, self.y - self.vel, obstacles, screen_width, screen_height):
             self.y -= self.vel  # Move up
-        if keys[pygame.K_DOWN] and self.y < 1000 - self.height and self.can_move(self.x, self.y + self.vel, obstacles):
+        if keys[pygame.K_DOWN] and self.y < screen_height - self.height and self.can_move(self.x, self.y + self.vel, obstacles, screen_width, screen_height):
             self.y += self.vel  # Move down
         
         self.collect_items(items)  # Check if player collects any items
 
-    def can_move(self, new_x, new_y, obstacles):
+    def can_move(self, new_x, new_y, obstacles, screen_width, screen_height):
         """
         Checks if the player can move to the new position without colliding.
 
@@ -49,9 +81,15 @@ class Player:
         Returns:
         - True if the move is allowed, False if it collides
         """
+        # Check if the player is colliding with the wall
+        if self.check_wall_collision(new_x, new_y, self.width, self.height, screen_width, screen_height):
+            return False  # Block movement if collision with wall
+
+        # Check for obstacles
         for obstacle in obstacles:
             if obstacle.collides_with(new_x, new_y, self.width, self.height):
-                return False  # Block movement if collision detected
+                return False  # Block movement if collision detected with obstacle
+        
         return True
 
     def collect_items(self, items):
@@ -163,7 +201,7 @@ class Game:
         self.levels = [
             {
                 "obstacles": [
-                    Obstacle(100, 200, 200, 100),  # Obstacle 1
+                    Obstacle(60, 200, 200, 100),  # Obstacle 1
                     Obstacle(400 + 100 - 100, 300 + 75 + 200, 150, 150),  # Obstacle 2
                     Obstacle(700 + 100, 500 + 90, 120, 180)   # Obstacle 3
                 ],
@@ -245,11 +283,10 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.run = False
-
     def update(self):
         keys = pygame.key.get_pressed()
         current_level_data = self.levels[self.current_level]
-        self.player.move(keys, current_level_data["obstacles"], current_level_data["items"])
+        self.player.move(keys, current_level_data["obstacles"], current_level_data["items"], self.screen.get_width(), self.screen.get_height())
 
         if len(current_level_data["items"]) == 0:
             print(f"Level {self.current_level + 1} completed!")
