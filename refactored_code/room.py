@@ -280,11 +280,19 @@ class Game:
                 if j < 1:  # Do not draw on the last row of rooms
                     pygame.draw.rect(self.screen, (0, 0, 0), (i * room_width, j * room_height + room_height, room_width, inner_wall_thickness))
 
-        # Add entrance between Room 1 and Room 2 (middle of the right wall)
-        entrance_width = 50
-        entrance_x = room_width + (room_width // 2) - (entrance_width // 2)  # Center of the right wall of Room 1
-        entrance_y = room_height // 2  # Middle of the right side of Room 1
-        pygame.draw.rect(self.screen, (255, 255, 255), (entrance_x, entrance_y, entrance_width, inner_wall_thickness))  # Entrance gap
+        # **Pathway between Room 1 and Room 2 (vertical gap on right side of Room 1)**
+        gap_width = 30  # Size of the gap (vertical opening)
+
+        # **Pathway between Room 2 and Room 3 (vertical gap on right side of Room 2)**
+        gap_x2 = room_width * 2  # Left side of Room 3, just before Room 2
+        gap_top_y2 = room_height // 2  # Center of the right wall of Room 2
+
+        # Draw gap in the vertical line (left part of the gap at the top)
+        pygame.draw.rect(self.screen, (255, 255, 255), (gap_x2, gap_top_y2, gap_width, 30))  # Upper part of the gap
+        # Draw gap in the vertical line (left part of the gap at the bottom)
+        pygame.draw.rect(self.screen, (255, 255, 255), (gap_x2, gap_top_y2 + room_height/1.2, gap_width, 60))  # Lower part of the gap
+        pygame.draw.rect(self.screen, (255, 255, 255), (room_width, gap_top_y2, gap_width, 60))  # Upper part of the gap
+        pygame.draw.rect(self.screen, (255, 255, 255), (room_width, gap_top_y2+room_height/1.2, gap_width, 60))  # Upper part of the gap
 
     def draw(self):
         self.screen.fill((255, 255, 255))
