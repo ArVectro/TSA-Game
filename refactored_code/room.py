@@ -18,36 +18,6 @@ class Player:
         self.vel = vel
         self.inventory = []
 
-    def check_wall_collision(self, x, y, width, height, screen_width, screen_height):
-        # Outer walls (building's border)
-        if x < 0 or x + width > screen_width or y < 0 or y + height > screen_height:
-            return True
-
-        room_width = screen_width // 3
-        room_height = screen_height // 2
-        wall_thickness = 10  # Outer walls' thickness
-        inner_wall_thickness = 5  # Inner walls' thickness
-
-        # Check for outer walls
-        if x < wall_thickness or x + width > screen_width - wall_thickness:
-            return True
-        if y < wall_thickness or y + height > screen_height - wall_thickness:
-            return True
-
-        # Check for inner walls between rooms
-        for i in range(3):  # Horizontal rooms
-            for j in range(2):  # Vertical rooms
-                # Check vertical walls
-                if i < 2 and x + width > i * room_width + room_width - inner_wall_thickness and x < i * room_width + room_width:
-                    if y + height > j * room_height and y < j * room_height + room_height:
-                        return True
-
-                # Check horizontal walls
-                if j < 1 and y + height > j * room_height + room_height - inner_wall_thickness and y < j * room_height + room_height:
-                    if x + width > i * room_width and x < i * room_width + room_width:
-                        return True
-
-        return False
 
     def move(self, keys, obstacles, items, screen_width, screen_height):
         """
@@ -58,7 +28,7 @@ class Player:
         - obstacles: List of obstacle objects to check for collision
         - items: List of item objects to check for collection
         """
-        # Check if player can move without colliding with walls
+        # Check if player can move without colliding with obstacles
         if keys[pygame.K_LEFT] and self.x > 0 and self.can_move(self.x - self.vel, self.y, obstacles, screen_width, screen_height):
             self.x -= self.vel  # Move left
         if keys[pygame.K_RIGHT] and self.x < screen_width - self.width and self.can_move(self.x + self.vel, self.y, obstacles, screen_width, screen_height):
@@ -81,9 +51,6 @@ class Player:
         Returns:
         - True if the move is allowed, False if it collides
         """
-        # Check if the player is colliding with the wall
-        if self.check_wall_collision(new_x, new_y, self.width, self.height, screen_width, screen_height):
-            return False  # Block movement if collision with wall
 
         # Check for obstacles
         for obstacle in obstacles:
@@ -193,8 +160,8 @@ class Game:
         self.screen = pygame.display.set_mode((1000, 800))  # Reduced height to 800
         pygame.display.set_caption("HEIST Game")
 
-        # Player moved to top-left as far as possible without overlapping with walls
-        self.player = Player(15, 15, 32, 32, 2.5)  # Player positioned at (10, 10), leaving 10 pixels from top-left walls
+        # Player moved to top-left as far as possible
+        self.player = Player(15, 15, 32, 32, 2.5)  # Player positioned at (10, 10)
 
 
         # Define levels (without items yet)
@@ -229,37 +196,6 @@ class Game:
         self.current_level = 0
         self.run = True
 
-    def check_wall_collision(self, x, y, width, height):
-        # Outer walls (building's border)
-        if x < 0 or x + width > self.screen.get_width() or y < 0 or y + height > self.screen.get_height():
-            return True
-
-        room_width = self.screen.get_width() // 3
-        room_height = self.screen.get_height() // 2
-        wall_thickness = 10  # Outer walls' thickness
-        inner_wall_thickness = 5  # Inner walls' thickness
-
-        # Check for outer walls
-        if x < wall_thickness or x + width > self.screen.get_width() - wall_thickness:
-            return True
-        if y < wall_thickness or y + height > self.screen.get_height() - wall_thickness:
-            return True
-
-        # Check for inner walls between rooms
-        for i in range(3):  # Horizontal rooms
-            for j in range(2):  # Vertical rooms
-                # Check vertical walls
-                if i < 2 and x + width > i * room_width + room_width - inner_wall_thickness and x < i * room_width + room_width:
-                    if y + height > j * room_height and y < j * room_height + room_height:
-                        return True
-
-                # Check horizontal walls
-                if j < 1 and y + height > j * room_height + room_height - inner_wall_thickness and y < j * room_height + room_height:
-                    if x + width > i * room_width and x < i * room_width + room_width:
-                        return True
-
-        return False
-
     def check_obstacle_collision(self, x, y, width, height, obstacles):
         for obstacle in obstacles:
             if obstacle.collides_with(x, y, width, height):
@@ -273,8 +209,8 @@ class Game:
             while not valid_position:
                 x = random.randint(50, 950)
                 y = random.randint(50, 750)
-                # Check if the item collides with walls or obstacles (passed via level_data)
-                if not self.check_wall_collision(x, y, size, size) and not self.check_obstacle_collision(x, y, size, size, level_data["obstacles"]):
+                # Check if the item collides with obstacles (passed via level_data)
+                if not self.check_obstacle_collision(x, y, size, size, level_data["obstacles"]):
                     valid_position = True
                     items.append(Item(x, y, size, size))  # Add item to the list
         return items
@@ -294,46 +230,8 @@ class Game:
                 self.current_level += 1
                 self.player.inventory.clear()
 
-    def draw_walls(self):
-        room_width = self.screen.get_width() // 3
-        room_height = self.screen.get_height() // 2
-        wall_thickness = 10  # Thicker outer walls
-        inner_wall_thickness = 5  # Thinner inner walls (where rooms meet)
-
-        # Draw outer walls (building's border)
-        pygame.draw.rect(self.screen, (0, 0, 0), (0, 0, self.screen.get_width(), wall_thickness))  # Top border
-        pygame.draw.rect(self.screen, (0, 0, 0), (0, 0, wall_thickness, self.screen.get_height()))  # Left border
-        pygame.draw.rect(self.screen, (0, 0, 0), (self.screen.get_width() - wall_thickness, 0, wall_thickness, self.screen.get_height()))  # Right border
-        pygame.draw.rect(self.screen, (0, 0, 0), (0, self.screen.get_height() - wall_thickness, self.screen.get_width(), wall_thickness))  # Bottom border
-
-        # Draw inner walls for rooms
-        for i in range(3):  # Horizontal rooms
-            for j in range(2):  # Vertical rooms
-                # Draw inner vertical walls (where rooms meet)
-                if i < 2:  # Do not draw on the last room
-                    pygame.draw.rect(self.screen, (0, 0, 0), (i * room_width + room_width, j * room_height, inner_wall_thickness, room_height))
-
-                # Draw inner horizontal walls (where rooms meet)
-                if j < 1:  # Do not draw on the last row of rooms
-                    pygame.draw.rect(self.screen, (0, 0, 0), (i * room_width, j * room_height + room_height, room_width, inner_wall_thickness))
-
-        # **Pathway between Room 1 and Room 2 (vertical gap on right side of Room 1)**
-        gap_width = 30  # Size of the gap (vertical opening)
-
-        # **Pathway between Room 2 and Room 3 (vertical gap on right side of Room 2)**
-        gap_x2 = room_width * 2  # Left side of Room 3, just before Room 2
-        gap_top_y2 = room_height // 2  # Center of the right wall of Room 2
-
-        # Draw gap in the vertical line (left part of the gap at the top)
-        pygame.draw.rect(self.screen, (255, 255, 255), (gap_x2, gap_top_y2, gap_width, 30))  # Upper part of the gap
-        # Draw gap in the vertical line (left part of the gap at the bottom)
-        pygame.draw.rect(self.screen, (255, 255, 255), (gap_x2, gap_top_y2 + room_height/1.2, gap_width, 60))  # Lower part of the gap
-        pygame.draw.rect(self.screen, (255, 255, 255), (room_width, gap_top_y2, gap_width, 60))  # Upper part of the gap
-        pygame.draw.rect(self.screen, (255, 255, 255), (room_width, gap_top_y2+room_height/1.2, gap_width, 60))  # Upper part of the gap
-
     def draw(self):
         self.screen.fill((255, 255, 255))
-        self.draw_walls()  # Draw outer walls and inner walls
 
         current_level_data = self.levels[self.current_level]
         for obstacle in current_level_data["obstacles"]:
