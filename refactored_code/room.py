@@ -18,7 +18,6 @@ class Player:
         self.vel = vel
         self.inventory = []
 
-
     def move(self, keys, obstacles, items, screen_width, screen_height):
         """
         Handles player movement while avoiding obstacles and collecting items.
@@ -82,18 +81,20 @@ class Player:
         pygame.draw.rect(screen, (255, 0, 0), (self.x, self.y, self.width, self.height))  # Red color
 
 class Obstacle:
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, color=(0, 0, 0)):
         """
         Initializes an obstacle.
         
         Parameters:
         - x, y: Position of the obstacle
         - width, height: Size of the obstacle
+        - color: Color of the obstacle (default is black)
         """
         self.x = x
         self.y = y
         self.width = width
         self.height = height
+        self.color = color  # New color parameter
 
     def draw(self, screen):
         """
@@ -102,7 +103,7 @@ class Obstacle:
         Parameters:
         - screen: The game screen where the obstacle will be drawn
         """
-        pygame.draw.rect(screen, (0, 0, 255), (self.x, self.y, self.width, self.height))  # Blue color
+        pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height))  # Use the color
 
     def collides_with(self, x, y, width, height):
         """
@@ -163,27 +164,32 @@ class Game:
         # Player moved to top-left as far as possible
         self.player = Player(15, 15, 32, 32, 2.5)  # Player positioned at (10, 10)
 
-
-        # Define levels (without items yet)
+        # Define levels with obstacle colors
         self.levels = [
             {
                 "obstacles": [
-                    Obstacle(60, 200, 200, 100),  # Obstacle 1
-                    Obstacle(400 + 100 - 100, 300 + 75 + 200, 150, 150),  # Obstacle 2
-                    Obstacle(700 + 100, 500 + 90, 120, 180)   # Obstacle 3
+                    Obstacle(1000//3, 0, 30, 200, (0, 0, 0)),  
+                    Obstacle(1000//3, 300, 30, 300, (0, 0, 0)),  
+                    Obstacle(1000//3, 700, 30, 100, (0, 0, 0)),  
+                    Obstacle(2000//3, 0, 30, 200, (0, 0, 0)),  
+                    Obstacle(2000//3, 300, 30, 300, (0, 0, 0)),  
+                    Obstacle(2000//3, 700, 30, 100, (0, 0, 0)),  
+                    Obstacle(0, 400, 900, 30, (0, 0, 0)), 
+                    Obstacle(25, 100, 75, 150, (118, 49, 64)),
+                    Obstacle(50, 125, 50, 100, (149,63,80))  
                 ],
             },
             {
                 "obstacles": [
-                    Obstacle(100, 100, 150, 100),
-                    Obstacle(600, 600, 200, 200),
-                    Obstacle(300, 400, 100, 100)
+                    Obstacle(100, 100, 150, 100, (255, 255, 255)), 
+                    Obstacle(600, 600, 200, 200, (128, 128, 128)), 
+                    Obstacle(300, 400, 100, 100, (0, 255, 255)) 
                 ],
             },
             {
                 "obstacles": [
-                    Obstacle(100, 100, 300, 100),
-                    Obstacle(500, 500, 100, 100)
+                    Obstacle(100, 100, 300, 100, (255, 0, 255)),  
+                    Obstacle(500, 500, 100, 100, (0, 128, 0))  
                 ],
             }
         ]
@@ -219,6 +225,7 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.run = False
+
     def update(self):
         keys = pygame.key.get_pressed()
         current_level_data = self.levels[self.current_level]
