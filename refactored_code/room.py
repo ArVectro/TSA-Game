@@ -263,7 +263,7 @@ class Game:
         pygame.display.set_caption("HEIST Game")
 
         # Player moved to top-left as far as possible
-        self.player = Player(31, 31, 32, 32, 2.5)  # Player positioned at (15, 15)
+        self.player = Player(31, 31, 29, 29, 5)  # Player positioned at (15, 15)
 
         # Define levels with obstacle colors and invisible obstacles
         self.levels = [
@@ -309,11 +309,24 @@ class Game:
             },
             {
                 "obstacles": [
-                    Obstacle(0, 0, 150, 100, (255, 255, 255)),
+                    Obstacle(0, 0, 1000, 20),
+                    Obstacle(0, 0, 20, 800),
+                    Obstacle(0, 780, 1000, 20),
+                    Obstacle(980, 0, 20, 800),
+                    Obstacle(295, 0, 20, 85),
+                    Obstacle(295, 150, 20, 260),
+                    Obstacle(295, 450, 20, 205),
+                    Obstacle(530, 0, 20, 85),
+                    Obstacle(530, 150, 20, 500),
+                    Obstacle(390, 650, 20, 140),
+                    Obstacle(510, 650, 20, 140),
+                    Obstacle(855, 167, 20, 47),
+                    Obstacle(855, 245, 20, 89),
+                    Obstacle(855, 365, 20, 89),
+                    Obstacle(855, 485, 20, 89)
                 ],
                 "invisibleObstacle": [
-                    InvisibleObstacle(200, 200, 50, 50),
-                    InvisibleObstacle(500, 500, 70, 70),
+                    
                 ],
                 "items": [],
             },
@@ -413,11 +426,13 @@ class Game:
             self.screen.get_height(),
         )
 
-        if len(current_level_data["items"]) == 0:
-            print(f"Level {self.current_level + 1} completed!")
-            if self.current_level < len(self.levels) - 1:
-                self.current_level += 1
-                self.player.inventory.clear()
+        # if len(current_level_data["items"]) == 0:
+        #     print(f"Level {self.current_level + 1} completed!")
+        #     if self.current_level < len(self.levels) - 1:
+        #         self.current_level += 1
+        #         self.player.inventory.clear()
+        if self.current_level == 0:  # Check if it's Level 1
+            self.current_level = 1  # Skip directly to Level 2 for testing
 
     def draw(self):
         self.screen.fill((255, 255, 255))
