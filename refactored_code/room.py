@@ -265,7 +265,7 @@ class Game:
         # Player moved to top-left as far as possible
         self.player = Player(31, 31, 32, 32, 2.5)  # Player positioned at (15, 15)
 
-        # Define levels with obstacle colors
+        # Define levels with obstacle colors and invisible obstacles
         self.levels = [
             {
                 "obstacles": [
@@ -282,42 +282,71 @@ class Game:
                     Obstacle(900, 385, 150, 30),
                     Obstacle(450, 385, 400, 30),
                 ],
+                "invisibleObstacle": [
+                    InvisibleObstacle(70, 150, 60, 120),
+                    InvisibleObstacle(120, 180, 110, 60),
+                    InvisibleObstacle(225, 150, 50, 120),
+                    InvisibleObstacle(427, 178, 176, 150),
+                    InvisibleObstacle(400, 215, 20, 20),
+                    InvisibleObstacle(400, 275, 20, 20),
+                    InvisibleObstacle(460, 330, 190, 60),
+                    InvisibleObstacle(450, 150, 120, 20),
+                    InvisibleObstacle(600, 210, 40, 180),
+                    InvisibleObstacle(675, 300, 25, 90),
+                    InvisibleObstacle(775, 30, 100, 150),
+                    InvisibleObstacle(750, 67, 20, 20),
+                    InvisibleObstacle(880, 67, 20, 20),
+                    InvisibleObstacle(950, 100, 25, 90),
+                    InvisibleObstacle(150, 590, 50, 90),
+                    InvisibleObstacle(350, 476, 25, 90),
+                    InvisibleObstacle(375, 625, 52, 120),
+                    InvisibleObstacle(575, 475, 52, 120),
+                    InvisibleObstacle(430, 715, 20, 20),
+                    InvisibleObstacle(550, 560, 20, 20),
+                    InvisibleObstacle(550, 740, 76, 30)
+                ],
+                "items": [],
             },
             {
                 "obstacles": [
-                    Obstacle(100, 100, 150, 100, (255, 255, 255)),
-                    Obstacle(600, 600, 200, 200, (128, 128, 128)),
-                    Obstacle(300, 400, 100, 100, (0, 255, 255)),
+                    Obstacle(0, 0, 150, 100, (255, 255, 255)),
                 ],
+                "invisibleObstacle": [
+                    InvisibleObstacle(200, 200, 50, 50),
+                    InvisibleObstacle(500, 500, 70, 70),
+                ],
+                "items": [],
             },
             {
                 "obstacles": [
                     Obstacle(100, 100, 300, 100, (255, 0, 255)),
                     Obstacle(500, 500, 100, 100, (0, 128, 0)),
                 ],
+                "invisibleObstacle": [
+                    InvisibleObstacle(150, 200, 80, 80),
+                    InvisibleObstacle(600, 350, 90, 100),
+                ],
+                "items": [],
             },
         ]
 
-        invisibleObstacles = [
-                    InvisibleObstacle(70, 150, 60, 120),
-                    InvisibleObstacle(70, 150, 60, 120),
-                ]
-
         # Now, generate items for each level, using level data
         for i in range(len(self.levels)):
-            self.levels[i]["invisibleObstacle"] = invisibleObstacles
             self.levels[i]["items"] = self.generate_items(30, 20, self.levels[i])
 
         self.font = pygame.font.SysFont("Arial", 24)
         self.current_level = 0
         self.run = True
 
-        self.background_image = pygame.image.load(
-            "refactored_code/tsa-mansion-map-final-graphics-pixilart (3).png"
-        )
-        self.background_image = pygame.transform.scale(
-            self.background_image, (self.screen.get_width(), self.screen.get_height())
-        )
+        # Load the background images for each level
+        self.background_images = [
+            pygame.image.load("refactored_code/lvl1.png"),
+            pygame.image.load("refactored_code/lvl2.png"), 
+            pygame.image.load("refactored_code/lvl3.png") 
+        ]
+
+        # Scale the images to match the screen size
+        self.background_images = [pygame.transform.scale(image, (self.screen.get_width(), self.screen.get_height())) for image in self.background_images]
 
         # Load the instruction screen image
         self.instruction_screen_image = pygame.image.load("chess.png")
@@ -328,6 +357,7 @@ class Game:
         # Flag to check if we are showing the instruction screen
         self.show_instructions = True
 
+
     def check_obstacle_collision(self, x, y, width, height, obstacles):
         for obstacle in obstacles:
             if obstacle.collides_with(x, y, width, height):
@@ -337,17 +367,28 @@ class Game:
     def generate_items(self, num_items, size, level_data):
         items = []
         obstacles = level_data.get("obstacles", [])
+        invisible_obstacles = level_data.get("invisibleObstacle", [])
+        
         for _ in range(num_items):
             valid_position = False
             while not valid_position:
+                # Randomly place item within the valid bounds
                 x = random.randint(50, 950)
                 y = random.randint(50, 750)
-                if not self.check_obstacle_collision(
-                    x, y, size, size, obstacles
-                ):
-                    valid_position = True
-                    items.append(Item(x, y, size, size))  # Add item to the list
+
+                # Check if the item collides with any regular obstacle
+                if self.check_obstacle_collision(x, y, size, size, obstacles):
+                    continue
+
+                # Check if the item collides with any invisible obstacle
+                if self.check_obstacle_collision(x, y, size, size, invisible_obstacles):
+                    continue
+
+                valid_position = True  # Valid position found
+                items.append(Item(x, y, size, size))  # Add item to the list
+                
         return items
+
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -385,9 +426,8 @@ class Game:
             # Draw the instruction screen (image)
             self.screen.blit(self.instruction_screen_image, (0, 0))
         else:
-            # Draw the background image for level 1
-            if self.current_level == 0:
-                self.screen.blit(self.background_image, (0, 0))
+            # Draw the background image based on the current level
+            self.screen.blit(self.background_images[self.current_level], (0, 0))
 
             current_level_data = self.levels[self.current_level]
             for obstacle in current_level_data["obstacles"]:
