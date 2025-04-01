@@ -2,6 +2,85 @@ import pygame
 import random
 
 
+class Screen:
+    def __init__(self):
+        # Initialize pygame and the screen
+        pygame.init()
+
+
+        # Game state variables
+        self.show_first_screen = True  # Flag to track if the first screen should be shown
+        self.show_instructions = False  # Flag to track if the instruction screen should be shown
+        self.show_game_screen = False  # Flag to track if the game screen should be shown
+
+        # Instruction screen image (you can replace this with your own image)
+        self.instruction_screen_image = pygame.image.load("instruction_screen.png")  
+        self.instruction_screen_image.fill((0, 255, 0))  # Green background for instructions
+        
+        # First screen image (you can replace this with your own image)
+        self.first_screen_image = pygame.image.load("chess.png")
+        self.first_screen_image.fill((255, 0, 0))  # Red background for first screen
+        
+        # Background image for main game (replace this with your game background)
+        self.background_image = pygame.Surface((800, 600))
+        self.background_image.fill((255, 255, 255))  # White background for the game
+
+        # Initialize other game elements
+        self.player = None  # Initialize player object (replace with actual player object)
+        
+    def restart_level(self):
+        """
+        Restart the current level by resetting the player's position and clearing the inventory.
+        """
+        print("Restarting level...")
+        self.player.x, self.player.y = 40, 680  # Reset player position
+        self.player.inventory.clear()  # Clear inventory
+
+    def draw(self):
+        """
+        Draw the current screen based on game state.
+        """
+        if self.show_first_screen:
+            # Draw the first screen (e.g., title or splash screen)
+            self.screen.blit(self.first_screen_image, (0, 0))
+        elif self.show_instructions:
+            # Draw the instruction screen
+            self.screen.blit(self.instruction_screen_image, (0, 0))
+        elif self.show_game_screen:
+            # Draw the main game screen
+            self.screen.blit(self.background_image, (0, 0))
+            # Add logic to draw your game elements, e.g., obstacles, player, items
+            self.player.draw(self.screen)  # Assuming your player object has a draw method
+        pygame.display.flip()
+
+    def handle_events(self):
+        """
+        Handle all events including mouse clicks.
+        """
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.show_first_screen:
+                    # When the first screen is clicked, show the instruction screen
+                    self.show_first_screen = False
+                    self.show_instructions = True
+                elif self.show_instructions:
+                    # When the instruction screen is clicked, hide it and show the game
+                    self.show_instructions = False
+                    self.show_game_screen = True
+
+    def game_loop(self):
+        """
+        Main game loop.
+        """
+        while True:
+            self.handle_events()
+            self.draw()  # Draw the screen based on the current state
+            self.clock.tick(60)  # Maintain 60 FPS
+
 class Player:
     def __init__(self, x, y, width, height, vel, image_path):
         """
@@ -256,14 +335,65 @@ class Item:
         )
 
 
-# class Laser:
-#     def __init__(self) -> None:
-#         pass
+class Laser:
+    def __init__(self, x, y, width, height, color=(255, 0, 0)):
+        """
+        Initializes a laser.
+
+        Parameters:
+        - x, y: Position of the laser
+        - width, height: Size of the laser (can be a thin rectangle)
+        - color: Color of the laser (default is red)
+        """
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.color = color
+
+    def draw(self, screen):
+        """
+        Draws the laser on the screen.
+
+        Parameters:
+        - screen: The game screen where the laser will be drawn
+        """
+        pygame.draw.rect(
+            screen, self.color, (self.x, self.y, self.width, self.height)
+        )  # Use the color
+
+    def collides_with(self, x, y, width, height):
+        """
+        Checks if a given rectangle (player) collides with this laser.
+
+        Parameters:
+        - x, y: Position of the rectangle (player)
+        - width, height: Size of the rectangle (player)
+
+        Returns:
+        - True if there's a collision, False otherwise
+        """
+        return (
+            x < self.x + self.width
+            and x + width > self.x
+            and y < self.y + self.height
+            and y + height > self.y
+        )
+    def laser_sound(self, sound_path):
+        sound = pygame.mixer.Sound("refactored_code/laser.mp3")
+        sound.play()
+
 
 class Game:
     def __init__(self):
         pygame.init()
         pygame.mixer.init()
+
+        # Load sound effects
+        # self.coin_pickup_sound = pygame.mixer.Sound("refactored_code/coin_pickup_sound.wav")
+        # self.laser_hit_sound = pygame.mixer.Sound("refactored_code/laser.mp3")
+        # self.game_over_sound = pygame.mixer.Sound("refactored_code/game_over_sound.wav")
+        self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((1000, 800))  # Reduced height to 800
         pygame.display.set_caption("HEIST Game")
 
@@ -311,6 +441,10 @@ class Game:
 
                 ],
                 "items": [],
+                "lasers": [
+                    Laser(80, 415, 5, 100),
+                    Laser(390, 660, 5, 110)
+                ]
             },
 
             {
@@ -352,6 +486,7 @@ class Game:
                     InvisibleObstacle(550, 740, 76, 30)
                 ],
                 "items": [],
+                "lasers": []
             },
             {
                 "obstacles": [
@@ -397,6 +532,7 @@ class Game:
                     InvisibleObstacle(110, 440, 70, 70)
                 ],
                 "items": [],
+                "lasers": []
             }
         ]
 
@@ -488,8 +624,7 @@ class Game:
         keys = pygame.key.get_pressed()
         current_level_data = self.levels[self.current_level]
 
-
-
+        # Move the player
         self.player.move(
             keys,
             current_level_data["obstacles"],
@@ -499,24 +634,37 @@ class Game:
             self.screen.get_height(),
         )
 
+        # Check for collisions with lasers
+        for laser in current_level_data.get("lasers", []):
+            if laser.collides_with(self.player.x, self.player.y, self.player.width, self.player.height):
+                print("Player hit a laser! Restarting level.")
+                
+                self.restart_level()
+
+        # Check if all items are collected
         if len(current_level_data["items"]) == 0:
             print(f"Level {self.current_level + 1} completed!")
             if self.current_level < len(self.levels) - 1:
                 self.current_level += 1
                 self.player.inventory.clear()  # Optionally clear the player's inventory when moving to the next level
-                # Reset player position to avoid any chance of starting in an invalid area
-                self.player.x, self.player.y = 40, 680
+                self.player.x, self.player.y = 40, 680  # Reset player position
 
+    def restart_level(self):
+        """
+        Restart the current level by resetting the player's position and clearing the inventory.
+        """
+        print("Restarting level...")
+        self.player.x, self.player.y = 40, 680  # Reset player position
+        self.player.inventory.clear()  # Clear inventory
+        
     def draw(self):
         self.screen.fill((255, 255, 255))
 
         if self.show_instructions:
-            # Draw the instruction screen (image)
             self.screen.blit(self.instruction_screen_image, (0, 0))
         elif self.show_instructions2:
             self.screen.blit(self.instruction_screen_image2, (0, 0))
-        else:    
-            # Draw the background image based on the current level
+        else:
             self.screen.blit(self.background_images[self.current_level], (0, 0))
 
             current_level_data = self.levels[self.current_level]
@@ -524,10 +672,12 @@ class Game:
                 obstacle.draw(self.screen)
             for item in current_level_data["items"]:
                 item.draw(self.screen)
+            for laser in current_level_data.get("lasers", []):
+                laser.draw(self.screen)
             self.player.draw(self.screen)
 
         pygame.display.update()
-
+        
     def run_game(self):
         while self.run:
             pygame.time.delay(10)
