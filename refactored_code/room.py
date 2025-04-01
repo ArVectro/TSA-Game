@@ -3,14 +3,15 @@ import random
 
 
 class Player:
-    def __init__(self, x, y, width, height, vel):
+    def __init__(self, x, y, width, height, vel, image_path):
         """
-        Initializes the player.
+        Initializes the player with an image.
 
         Parameters:
         - x, y: Initial position of the player
         - width, height: Size of the player
         - vel: Movement speed of the player
+        - image_path: Path to the image to represent the player
         """
         self.x = x
         self.y = y
@@ -19,16 +20,16 @@ class Player:
         self.vel = vel
         self.inventory = []
 
+        # Load the player image
+        self.image = pygame.image.load(image_path)
+
+        # Scale the image to fit the player's size (optional, based on your game's design)
+        self.image = pygame.transform.scale(self.image, (self.width, self.height))
+
     def move(self, keys, obstacles, items, invisibleObstacle, screen_width, screen_height):
         """
         Handles player movement while avoiding obstacles and collecting items.
-
-        Parameters:
-        - keys: Pressed keys from pygame.key.get_pressed()
-        - obstacles: List of obstacle objects to check for collision
-        - items: List of item objects to check for collection
         """
-        # Check if player can move without colliding with obstacles
         if (
             keys[pygame.K_LEFT]
             and self.x > 0
@@ -103,16 +104,15 @@ class Player:
                 print(f"Money collected! Inventory: {len(self.inventory)} items.")  # Feedback
 
 
+
     def draw(self, screen):
         """
-        Draws the player on the screen.
+        Draws the player image on the screen.
 
         Parameters:
         - screen: The game screen where the player will be drawn
         """
-        pygame.draw.rect(
-            screen, (255, 0, 0), (self.x, self.y, self.width, self.height)
-        )  # Red color
+        screen.blit(self.image, (self.x, self.y))  # Draw the player image at (x, y)
 
 
 class InvisibleObstacle:
@@ -259,11 +259,12 @@ class Item:
 class Game:
     def __init__(self):
         pygame.init()
+        pygame.mixer.init()
         self.screen = pygame.display.set_mode((1000, 800))  # Reduced height to 800
         pygame.display.set_caption("HEIST Game")
 
-        # Player moved to top-left as far as possible
-        self.player = Player(31, 31, 29, 29, 5)  # Player positioned at (15, 15)
+        # Add image_path parameter for the player image
+        self.player = Player(40, 680, 28.4, 32, 2.5, "refactored_code/standing_robber.png")  # Example path to the image
 
         # Define levels with obstacle colors and invisible obstacles
         self.levels = [
@@ -320,24 +321,75 @@ class Game:
                     Obstacle(530, 150, 20, 500),
                     Obstacle(390, 650, 20, 140),
                     Obstacle(510, 650, 20, 140),
-                    Obstacle(855, 167, 20, 47),
-                    Obstacle(855, 245, 20, 89),
-                    Obstacle(855, 365, 20, 89),
-                    Obstacle(855, 485, 20, 89)
+                    Obstacle(855, 167, 20, 44),
+                    Obstacle(855, 245, 20, 86),
+                    Obstacle(855, 365, 20, 86),
+                    Obstacle(855, 485, 20, 86),
+                    Obstacle(855, 605, 20, 40),
+                    Obstacle(0, 230, 40, 20),
+                    Obstacle(120, 230, 290, 20),
+                    Obstacle(500, 230, 40, 20),
+                    Obstacle(0, 505, 160, 20),
+                    Obstacle(225, 505, 90, 20),
+                    Obstacle(295, 635, 125, 20),
+                    Obstacle(550, 160, 325, 20),
+                    Obstacle(550, 280, 325, 20),
+                    Obstacle(550, 405, 325, 20),
+                    Obstacle(550, 520, 325, 20),
+                    Obstacle(520, 635, 385, 20),
+                    Obstacle(970, 635, 30, 20)
                 ],
                 "invisibleObstacle": [
-                    
+                    InvisibleObstacle(350, 60, 150, 35),
+                    InvisibleObstacle(35, 560, 105, 65),
+                    InvisibleObstacle(320, 285, 70, 90),
+                    InvisibleObstacle(340, 460, 50, 90),
+                    InvisibleObstacle(550, 180, 85, 105),
+                    InvisibleObstacle(550, 305, 85, 105),
+                    InvisibleObstacle(550, 430, 85, 105),
+                    InvisibleObstacle(550, 555, 85, 105),
+                    InvisibleObstacle(575, 700, 300, 100),
+                    InvisibleObstacle(110, 440, 70, 70)
                 ],
                 "items": [],
             },
             {
                 "obstacles": [
-                    Obstacle(100, 100, 300, 100, (255, 0, 255)),
-                    Obstacle(500, 500, 100, 100, (0, 128, 0)),
+                    Obstacle(0, 0, 520, 415),
+                    Obstacle(0, 0, 40, 800),
+                    Obstacle(0, 0, 1000, 40),
+                    Obstacle(960, 0, 40, 800),
+                    Obstacle(0, 770, 1000, 30),
+                    Obstacle(520, 385, 260, 30),
+                    Obstacle(855, 385, 145, 30),
+                    Obstacle(485, 415, 30, 65),
+                    Obstacle(485, 530, 30, 270),
                 ],
                 "invisibleObstacle": [
-                    InvisibleObstacle(150, 200, 80, 80),
-                    InvisibleObstacle(600, 350, 90, 100),
+                    InvisibleObstacle(110, 740, 150, 40),
+                    InvisibleObstacle(445, 680, 30, 120),
+                    InvisibleObstacle(175, 565, 40, 30),
+                    InvisibleObstacle(260, 500, 40, 30),
+                    InvisibleObstacle(260, 630, 40, 30),
+                    InvisibleObstacle(345, 565, 40, 30),
+                    InvisibleObstacle(225, 535, 110, 90),
+                    InvisibleObstacle(805, 645, 80, 60),
+                    InvisibleObstacle(760, 670, 40, 30),
+                    InvisibleObstacle(815, 610, 40, 30),
+                    InvisibleObstacle(830, 710, 40, 30),
+                    InvisibleObstacle(890, 650, 40, 30),
+                    InvisibleObstacle(520, 415, 230, 65),
+                    InvisibleObstacle(520, 565, 225, 235),
+                    InvisibleObstacle(890, 415, 75, 180),
+                    InvisibleObstacle(925, 235, 35, 150),
+                    InvisibleObstacle(560, 80, 75, 120),
+                    InvisibleObstacle(855, 80, 75, 120),
+                    InvisibleObstacle(555, 300, 150, 90),
+                    InvisibleObstacle(640, 170, 30, 25),
+                    InvisibleObstacle(670, 270, 30, 25),
+                    InvisibleObstacle(815, 170, 30, 25),
+                    InvisibleObstacle(755, 705, 70, 40)
+
                 ],
                 "items": [],
             },
@@ -345,7 +397,7 @@ class Game:
 
         # Now, generate items for each level, using level data
         for i in range(len(self.levels)):
-            self.levels[i]["items"] = self.generate_items(30, 20, self.levels[i])
+            self.levels[i]["items"] = self.generate_items(50, 20, self.levels[i])
 
         self.font = pygame.font.SysFont("Arial", 24)
         self.current_level = 0
@@ -357,10 +409,10 @@ class Game:
             pygame.image.load("refactored_code/lvl2.png"), 
             pygame.image.load("refactored_code/lvl3.png") 
         ]
-
+#        end_screen_image = pygame.image.load('refactored_code/game_over.png')  # Replace with your image
         # Scale the images to match the screen size
         self.background_images = [pygame.transform.scale(image, (self.screen.get_width(), self.screen.get_height())) for image in self.background_images]
-
+ #       end_screen_image = pygame.transform.scale(end_screen_image, (self.screen.get_width(), self.screen.get_height()))
         # Load the instruction screen image
         self.instruction_screen_image = pygame.image.load("chess.png")
         self.instruction_screen_image = pygame.transform.scale(
@@ -369,6 +421,11 @@ class Game:
 
         # Flag to check if we are showing the instruction screen
         self.show_instructions = True
+
+         # Play background music on loop
+        pygame.mixer.music.load("refactored_code/Rev.mp3")  # Replace with your music file path
+        pygame.mixer.music.set_volume(0.5)  # Optional: Set volume (0.0 to 1.0)
+        pygame.mixer.music.play(-1)  # The -1 means loop forever
 
 
     def check_obstacle_collision(self, x, y, width, height, obstacles):
@@ -417,6 +474,9 @@ class Game:
 
         keys = pygame.key.get_pressed()
         current_level_data = self.levels[self.current_level]
+
+
+
         self.player.move(
             keys,
             current_level_data["obstacles"],
@@ -426,13 +486,13 @@ class Game:
             self.screen.get_height(),
         )
 
-        # if len(current_level_data["items"]) == 0:
-        #     print(f"Level {self.current_level + 1} completed!")
-        #     if self.current_level < len(self.levels) - 1:
-        #         self.current_level += 1
-        #         self.player.inventory.clear()
-        if self.current_level == 0:  # Check if it's Level 1
-            self.current_level = 1  # Skip directly to Level 2 for testing
+        if len(current_level_data["items"]) == 0:
+            print(f"Level {self.current_level + 1} completed!")
+            if self.current_level < len(self.levels) - 1:
+                self.current_level += 1
+                self.player.inventory.clear()  # Optionally clear the player's inventory when moving to the next level
+                # Reset player position to avoid any chance of starting in an invalid area
+                self.player.x, self.player.y = 40, 680
 
     def draw(self):
         self.screen.fill((255, 255, 255))
