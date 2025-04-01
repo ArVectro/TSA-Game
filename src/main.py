@@ -380,7 +380,7 @@ class Laser:
             and y + height > self.y
         )
     def laser_sound(self, sound_path):
-        sound = pygame.mixer.Sound("refactored_code/laser.mp3")
+        sound = pygame.mixer.Sound("src/assets/laser.mp3")
         sound.play()
 
 
@@ -390,15 +390,15 @@ class Game:
         pygame.mixer.init()
 
         # Load sound effects
-        # self.coin_pickup_sound = pygame.mixer.Sound("refactored_code/coin_pickup_sound.wav")
-        # self.laser_hit_sound = pygame.mixer.Sound("refactored_code/laser.mp3")
-        # self.game_over_sound = pygame.mixer.Sound("refactored_code/game_over_sound.wav")
+        # self.coin_pickup_sound = pygame.mixer.Sound("src/assets/coin_pickup_sound.wav")
+        # self.laser_hit_sound = pygame.mixer.Sound("src/assets/laser.mp3")
+        # self.game_over_sound = pygame.mixer.Sound("src/assets/game_over_sound.wav")
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((1000, 800))  # Reduced height to 800
         pygame.display.set_caption("HEIST Game")
 
         # Add image_path parameter for the player image
-        self.player = Player(40, 680, 28.4, 32, 2.5, "refactored_code/standing_robber.png")  # Example path to the image
+        self.player = Player(40, 680, 28.4, 32, 2.5, "src/assets/standing_robber.png")  # Example path to the image
 
         # Define levels with obstacle colors and invisible obstacles
         self.levels = [
@@ -546,26 +546,26 @@ class Game:
 
         # Load the background images for each level
         self.background_images = [
-            pygame.image.load("refactored_code/lvl1.png"),
-            pygame.image.load("refactored_code/lvl2.png"), 
-            pygame.image.load("refactored_code/lvl3.png") 
+            pygame.image.load("src/assets/lvl1.png"),
+            pygame.image.load("src/assets/lvl2.png"), 
+            pygame.image.load("src/assets/lvl3.png") 
         ]
         # Scale the images to match the screen size
         self.background_images = [pygame.transform.scale(image, (self.screen.get_width(), self.screen.get_height())) for image in self.background_images]
  #       end_screen_image = pygame.transform.scale(end_screen_image, (self.screen.get_width(), self.screen.get_height()))
         # Load the instruction screen image and end screen
-        self.instruction_screen_image = pygame.image.load("refactored_code/chess.png")
+        self.instruction_screen_image = pygame.image.load("src/assets/chess.png")
         self.instruction_screen_image = pygame.transform.scale(self.instruction_screen_image, (self.screen.get_width(), self.screen.get_height()))
-        self.end_screen_image = pygame.image.load("refactored_code/game_over.png")
+        self.end_screen_image = pygame.image.load("src/assets/game_over.png")
         self.end_screen_image = pygame.transform.scale(self.end_screen_image, (self.screen.get_width(), self.screen.get_height()))
-        self.instruction_screen_image2 = pygame.image.load("refactored_code/instruction_screen.png")
+        self.instruction_screen_image2 = pygame.image.load("src/assets/instruction_screen.png")
         self.instruction_screen_image2 = pygame.transform.scale(self.instruction_screen_image2, (self.screen.get_width(), self.screen.get_height()))
         # Flag to check if we are showing the instruction screen
         self.show_instructions = True
         self.show_instructions2 = True
 
          # Play background music on loop
-        pygame.mixer.music.load("refactored_code/Rev.mp3")  # Replace with your music file path
+        pygame.mixer.music.load("src/assets/Rev.mp3")  # Replace with your music file path
         pygame.mixer.music.set_volume(0.5)  # Optional: Set volume (0.0 to 1.0)
         pygame.mixer.music.play(-1)  # The -1 means loop forever
 
