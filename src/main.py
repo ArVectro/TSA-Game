@@ -554,15 +554,19 @@ class Game:
         self.background_images = [pygame.transform.scale(image, (self.screen.get_width(), self.screen.get_height())) for image in self.background_images]
  #       end_screen_image = pygame.transform.scale(end_screen_image, (self.screen.get_width(), self.screen.get_height()))
         # Load the instruction screen image and end screen
-        self.instruction_screen_image = pygame.image.load("src/assets/chess.png")
+        self.instruction_screen_image = pygame.image.load("src/assets/instruction_screen.png")
         self.instruction_screen_image = pygame.transform.scale(self.instruction_screen_image, (self.screen.get_width(), self.screen.get_height()))
+        self.first_screen_image = pygame.image.load("src/assets/chess.png")
+        self.first_screen_image = pygame.transform.scale(self.first_screen_image, (self.screen.get_width(), self.screen.get_height()))
+
         self.end_screen_image = pygame.image.load("src/assets/game_over.png")
         self.end_screen_image = pygame.transform.scale(self.end_screen_image, (self.screen.get_width(), self.screen.get_height()))
-        self.instruction_screen_image2 = pygame.image.load("src/assets/instruction_screen.png")
-        self.instruction_screen_image2 = pygame.transform.scale(self.instruction_screen_image2, (self.screen.get_width(), self.screen.get_height()))
+        # self.instruction_screen_image2 = pygame.image.load("src/assets/instruction_screen.png")
+        # self.instruction_screen_image2 = pygame.transform.scale(self.instruction_screen_image2, (self.screen.get_width(), self.screen.get_height()))
         # Flag to check if we are showing the instruction screen
-        self.show_instructions = True
-        self.show_instructions2 = True
+        self.show_instructions = False
+        self.show_first_screen = True
+        self.show_game_screen = False
 
          # Play background music on loop
         pygame.mixer.music.load("src/assets/Rev.mp3")  # Replace with your music file path
@@ -606,19 +610,22 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.run = False
-            if event.type == pygame.MOUSEBUTTONDOWN and self.show_instructions:
+                break
+            if event.type == pygame.MOUSEBUTTONDOWN and self.show_first_screen:
                 # When user clicks on instruction screen, start the game.
+                self.show_instructions = True
+                self.show_first_screen = False
+                break
+            if event.type == pygame.MOUSEBUTTONDOWN and self.show_instructions:
                 self.show_instructions = False
-                self.show_instructions2 = True
-            if event.type == pygame.MOUSEBUTTONDOWN and self.show_instructions2:
-                self.show_instructions2 = False
-            
+                self.show_game_screen = True
+                break       
 
     def update(self):
         if self.show_instructions:
             return  # Don't update the game if we're showing the instruction screen.
 
-        if self.show_instructions2:
+        if self.show_first_screen:
             return
         
         keys = pygame.key.get_pressed()
@@ -660,10 +667,10 @@ class Game:
     def draw(self):
         self.screen.fill((255, 255, 255))
 
-        if self.show_instructions:
+        if self.show_first_screen:
+            self.screen.blit(self.first_screen_image, (0, 0))
+        elif self.show_instructions:
             self.screen.blit(self.instruction_screen_image, (0, 0))
-        elif self.show_instructions2:
-            self.screen.blit(self.instruction_screen_image2, (0, 0))
         else:
             self.screen.blit(self.background_images[self.current_level], (0, 0))
 
