@@ -256,6 +256,10 @@ class Item:
         )
 
 
+# class Laser:
+#     def __init__(self) -> None:
+#         pass
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -268,6 +272,47 @@ class Game:
 
         # Define levels with obstacle colors and invisible obstacles
         self.levels = [
+            {
+                "obstacles": [
+                    Obstacle(0, 0, 520, 415),
+                    Obstacle(0, 0, 40, 800),
+                    Obstacle(0, 0, 1000, 40),
+                    Obstacle(960, 0, 40, 800),
+                    Obstacle(0, 770, 1000, 30),
+                    Obstacle(520, 385, 260, 30),
+                    Obstacle(855, 385, 145, 30),
+                    Obstacle(485, 415, 30, 65),
+                    Obstacle(485, 530, 30, 270),
+                ],
+                "invisibleObstacle": [
+                    InvisibleObstacle(110, 740, 150, 40),
+                    InvisibleObstacle(445, 680, 30, 120),
+                    InvisibleObstacle(175, 565, 40, 30),
+                    InvisibleObstacle(260, 500, 40, 30),
+                    InvisibleObstacle(260, 630, 40, 30),
+                    InvisibleObstacle(345, 565, 40, 30),
+                    InvisibleObstacle(225, 535, 110, 90),
+                    InvisibleObstacle(805, 645, 80, 60),
+                    InvisibleObstacle(760, 670, 40, 30),
+                    InvisibleObstacle(815, 610, 40, 30),
+                    InvisibleObstacle(830, 710, 40, 30),
+                    InvisibleObstacle(890, 650, 40, 30),
+                    InvisibleObstacle(520, 415, 230, 65),
+                    InvisibleObstacle(520, 565, 225, 235),
+                    InvisibleObstacle(890, 415, 75, 180),
+                    InvisibleObstacle(925, 235, 35, 150),
+                    InvisibleObstacle(560, 80, 75, 120),
+                    InvisibleObstacle(855, 80, 75, 120),
+                    InvisibleObstacle(555, 300, 150, 90),
+                    InvisibleObstacle(640, 170, 30, 25),
+                    InvisibleObstacle(670, 270, 30, 25),
+                    InvisibleObstacle(815, 170, 30, 25),
+                    InvisibleObstacle(755, 705, 70, 40)
+
+                ],
+                "items": [],
+            },
+
             {
                 "obstacles": [
                     Obstacle(0, 0, 1000, 30),
@@ -352,47 +397,7 @@ class Game:
                     InvisibleObstacle(110, 440, 70, 70)
                 ],
                 "items": [],
-            },
-            {
-                "obstacles": [
-                    Obstacle(0, 0, 520, 415),
-                    Obstacle(0, 0, 40, 800),
-                    Obstacle(0, 0, 1000, 40),
-                    Obstacle(960, 0, 40, 800),
-                    Obstacle(0, 770, 1000, 30),
-                    Obstacle(520, 385, 260, 30),
-                    Obstacle(855, 385, 145, 30),
-                    Obstacle(485, 415, 30, 65),
-                    Obstacle(485, 530, 30, 270),
-                ],
-                "invisibleObstacle": [
-                    InvisibleObstacle(110, 740, 150, 40),
-                    InvisibleObstacle(445, 680, 30, 120),
-                    InvisibleObstacle(175, 565, 40, 30),
-                    InvisibleObstacle(260, 500, 40, 30),
-                    InvisibleObstacle(260, 630, 40, 30),
-                    InvisibleObstacle(345, 565, 40, 30),
-                    InvisibleObstacle(225, 535, 110, 90),
-                    InvisibleObstacle(805, 645, 80, 60),
-                    InvisibleObstacle(760, 670, 40, 30),
-                    InvisibleObstacle(815, 610, 40, 30),
-                    InvisibleObstacle(830, 710, 40, 30),
-                    InvisibleObstacle(890, 650, 40, 30),
-                    InvisibleObstacle(520, 415, 230, 65),
-                    InvisibleObstacle(520, 565, 225, 235),
-                    InvisibleObstacle(890, 415, 75, 180),
-                    InvisibleObstacle(925, 235, 35, 150),
-                    InvisibleObstacle(560, 80, 75, 120),
-                    InvisibleObstacle(855, 80, 75, 120),
-                    InvisibleObstacle(555, 300, 150, 90),
-                    InvisibleObstacle(640, 170, 30, 25),
-                    InvisibleObstacle(670, 270, 30, 25),
-                    InvisibleObstacle(815, 170, 30, 25),
-                    InvisibleObstacle(755, 705, 70, 40)
-
-                ],
-                "items": [],
-            },
+            }
         ]
 
         # Now, generate items for each level, using level data
@@ -409,18 +414,19 @@ class Game:
             pygame.image.load("refactored_code/lvl2.png"), 
             pygame.image.load("refactored_code/lvl3.png") 
         ]
-#        end_screen_image = pygame.image.load('refactored_code/game_over.png')  # Replace with your image
         # Scale the images to match the screen size
         self.background_images = [pygame.transform.scale(image, (self.screen.get_width(), self.screen.get_height())) for image in self.background_images]
  #       end_screen_image = pygame.transform.scale(end_screen_image, (self.screen.get_width(), self.screen.get_height()))
-        # Load the instruction screen image
-        self.instruction_screen_image = pygame.image.load("chess.png")
-        self.instruction_screen_image = pygame.transform.scale(
-            self.instruction_screen_image, (self.screen.get_width(), self.screen.get_height())
-        )
-
+        # Load the instruction screen image and end screen
+        self.instruction_screen_image = pygame.image.load("refactored_code/chess.png")
+        self.instruction_screen_image = pygame.transform.scale(self.instruction_screen_image, (self.screen.get_width(), self.screen.get_height()))
+        self.end_screen_image = pygame.image.load("refactored_code/game_over.png")
+        self.end_screen_image = pygame.transform.scale(self.end_screen_image, (self.screen.get_width(), self.screen.get_height()))
+        self.instruction_screen_image2 = pygame.image.load("refactored_code/instruction_screen.png")
+        self.instruction_screen_image2 = pygame.transform.scale(self.instruction_screen_image2, (self.screen.get_width(), self.screen.get_height()))
         # Flag to check if we are showing the instruction screen
         self.show_instructions = True
+        self.show_instructions2 = True
 
          # Play background music on loop
         pygame.mixer.music.load("refactored_code/Rev.mp3")  # Replace with your music file path
@@ -467,11 +473,18 @@ class Game:
             if event.type == pygame.MOUSEBUTTONDOWN and self.show_instructions:
                 # When user clicks on instruction screen, start the game.
                 self.show_instructions = False
+                self.show_instructions2 = True
+            if event.type == pygame.MOUSEBUTTONDOWN and self.show_instructions2:
+                self.show_instructions2 = False
+            
 
     def update(self):
         if self.show_instructions:
             return  # Don't update the game if we're showing the instruction screen.
 
+        if self.show_instructions2:
+            return
+        
         keys = pygame.key.get_pressed()
         current_level_data = self.levels[self.current_level]
 
@@ -500,7 +513,9 @@ class Game:
         if self.show_instructions:
             # Draw the instruction screen (image)
             self.screen.blit(self.instruction_screen_image, (0, 0))
-        else:
+        elif self.show_instructions2:
+            self.screen.blit(self.instruction_screen_image2, (0, 0))
+        else:    
             # Draw the background image based on the current level
             self.screen.blit(self.background_images[self.current_level], (0, 0))
 
