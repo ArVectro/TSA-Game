@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEIST Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+        }
+        #gameContainer {
+            position: relative;
+            width: 1000px;
+            height: 800px;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1000" height="800"></canvas>
+    </div>
+
+    <script>
+        // Game Classes and Main Logic
+        class Player {
+            constructor(x, y, width, height, vel, imagePath) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.vel = vel;
+                this.inventory = [];
+                this.image = new Image();
+                this.image.src = imagePath;
+            }
+
+            move(keys, obstacles, items, invisibleObstacle, screenWidth, screenHeight) {
+                if (keys.ArrowLeft && this.x > 0 && 
+                    this.canMove(this.x - this.vel, this.y, obstacles, invisibleObstacle, screenWidth, screenHeight)) {
+                    this.x -= this.vel;
+                }
+                if (keys.ArrowRight && this.x < screenWidth - this.width && 
+                    this.canMove(this.x + this.vel, this.y, obstacles, invisibleObstacle, screenWidth, screenHeight)) {
+                    this.x += this.vel;
+                }
+                if (keys.ArrowUp && this.y > 0 && 
+                    this.canMove(this.x, this.y - this.vel, obstacles, invisibleObstacle, screenWidth, screenHeight)) {
+                    this.y -= this.vel;
+                }
+                if (keys.ArrowDown && this.y < screenHeight - this.height && 
+                    this.canMove(this.x, this.y + this.vel, obstacles, invisibleObstacle, screenWidth, screenHeight)) {
+                    this.y += this.vel;
+                }
+
+                this.collectItems(items);
+            }
+
+            canMove(newX, newY, obstacles, invisibleObstacle, screenWidth, screenHeight) {
+                // Check for obstacles
+                for (const obstacle of obstacles) {
+                    if (obstacle.collidesWith(newX, newY, this.width, this.height)) {
+                        return false;
+                    }
+                }
+
+                // Check for invisible obstacles
+                for (const invObs of invisibleObstacle) {
+                    if (invObs.collidesWith(newX, newY, this.width, this.height)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            collectItems(items) {
+                for (let i = items.length - 1; i >= 0; i--) {
+                    if (items[i].collidesWith(this.x, this.y, this.width, this.height)) {
+                        this.inventory.push(items[i]);
+                        items.splice(i, 1);
+                        console.log(`Money collected! Inventory: ${this.inventory.length} items.`);
+                    }
+                }
+            }
+
+            draw(ctx) {
+                ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+            }
+        }
+
+        class Obstacle {
+            constructor(x, y, width, height, color = '#000000') {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.color = color;
+            }
+
+            draw(ctx) {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+
+            collidesWith(x, y, width, height) {
+                return (
+                    x < this.x + this.width &&
+                    x + width > this.x &&
+                    y < this.y + this.height &&
+                    y + height > this.y
+                );
+            }
+        }
+
+        class InvisibleObstacle extends Obstacle {
+            constructor(x, y, width, height, color = '#000000') {
+                super(x, y, width, height, color);
+            }
+        }
+
+        class Item {
+            constructor(x, y, width, height) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+            }
+
+            draw(ctx) {
+                ctx.fillStyle = '#FFDF00'; // Gold color
+                ctx.beginPath();
+                ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.width / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            collidesWith(x, y, width, height) {
+                return (
+                    x < this.x + this.width &&
+                    x + width > this.x &&
+                    y < this.y + this.height &&
+                    y + height > this.y
+                );
+            }
+        }
+
+        class Laser extends Obstacle {
+            constructor(x, y, width, height, color = '#FF0000') {
+                super(x, y, width, height, color);
+            }
+
+            playSound() {
+                const sound = new Audio('src/assets/laser.mp3');
+                sound.play();
+            }
+        }
+
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                
+                this.player = new Player(40, 680, 28.4, 32, 2.5, "src/assets/standing_robber.png");
+                
+                this.levels = this.createLevels();
+                
+                // Initialize background images
+                this.backgroundImages = [];
+                for (let i = 1; i <= 3; i++) {
+                    const img = new Image();
+                    img.src = `src/assets/lvl${i}.png`;
+                    this.backgroundImages.push(img);
+                }
+                
+                this.instructionScreenImage = new Image();
+                this.instructionScreenImage.src = "src/assets/instruction_screen.png";
+                
+                this.firstScreenImage = new Image();
+                this.firstScreenImage.src = "src/assets/chess.png";
+                
+                this.endScreenImage = new Image();
+                this.endScreenImage.src = "src/assets/game_over.png";
+                
+                this.showInstructions = false;
+                this.showFirstScreen = true;
+                this.showGameScreen = false;
+                
+                this.currentLevel = 0;
+                this.running = true;
+                
+                // Initialize keyboard input
+                this.keys = {};
+                
+                // Add event listeners
+                window.addEventListener('keydown', e => {
+                    this.keys[e.key] = true;
+                });
+                
+                window.addEventListener('keyup', e => {
+                    this.keys[e.key] = false;
+                });
+                
+                this.canvas.addEventListener('click', () => {
+                    if (this.showFirstScreen) {
+                        this.showFirstScreen = false;
+                        this.showInstructions = true;
+                    } else if (this.showInstructions) {
+                        this.showInstructions = false;
+                        this.showGameScreen = true;
+                    }
+                });
+                
+                // Load and play background music
+                this.backgroundMusic = new Audio('src/assets/Rev.mp3');
+                this.backgroundMusic.loop = true;
+                this.backgroundMusic.volume = 0.5;
+                
+                // Start game loop
+                this.lastTime = 0;
+                this.gameLoop(0);
+                
+                // Start music on first interaction
+                document.addEventListener('click', () => {
+                    this.backgroundMusic.play();
+                }, { once: true });
+            }
+            
+            createLevels() {
+                return [
+                    {
+                        obstacles: [
+                            new Obstacle(0, 0, 520, 415),
+                            new Obstacle(0, 0, 40, 800),
+                            new Obstacle(0, 0, 1000, 40),
+                            new Obstacle(960, 0, 40, 800),
+                            new Obstacle(0, 770, 1000, 30),
+                            new Obstacle(520, 385, 260, 30),
+                            new Obstacle(855, 385, 145, 30),
+                            new Obstacle(485, 415, 30, 65),
+                            new Obstacle(485, 530, 30, 270),
+                        ],
+                        invisibleObstacle: [
+                            new InvisibleObstacle(110, 740, 150, 40),
+                            new InvisibleObstacle(445, 680, 30, 120),
+                            new InvisibleObstacle(175, 565, 40, 30),
+                            new InvisibleObstacle(260, 500, 40, 30),
+                            new InvisibleObstacle(260, 630, 40, 30),
+                            new InvisibleObstacle(345, 565, 40, 30),
+                            new InvisibleObstacle(225, 535, 110, 90),
+                            new InvisibleObstacle(805, 645, 80, 60),
+                            new InvisibleObstacle(760, 670, 40, 30),
+                            new InvisibleObstacle(815, 610, 40, 30),
+                            new InvisibleObstacle(830, 710, 40, 30),
+                            new InvisibleObstacle(890, 650, 40, 30),
+                            new InvisibleObstacle(520, 415, 230, 65),
+                            new InvisibleObstacle(520, 565, 225, 235),
+                            new InvisibleObstacle(890, 415, 75, 180),
+                            new InvisibleObstacle(925, 235, 35, 150),
+                            new InvisibleObstacle(560, 80, 75, 120),
+                            new InvisibleObstacle(855, 80, 75, 120),
+                            new InvisibleObstacle(555, 300, 150, 90),
+                            new InvisibleObstacle(640, 170, 30, 25),
+                            new InvisibleObstacle(670, 270, 30, 25),
+                            new InvisibleObstacle(815, 170, 30, 25),
+                            new InvisibleObstacle(755, 705, 70, 40)
+                        ],
+                        items: [],
+                        lasers: [
+                            new Laser(80, 415, 5, 100),
+                            new Laser(390, 660, 5, 110)
+                        ]
+                    },
+                    {
+                        obstacles: [
+                            new Obstacle(0, 0, 1000, 30),
+                            new Obstacle(0, 0, 30, 800),
+                            new Obstacle(0, 770, 1000, 30),
+                            new Obstacle(970, 0, 30, 800),
+                            new Obstacle(323, 0, 30, 100),
+                            new Obstacle(323, 150, 30, 650),
+                            new Obstacle(646, 0, 30, 100),
+                            new Obstacle(646, 150, 30, 650),
+                            new Obstacle(0, 385, 150, 30),
+                            new Obstacle(200, 385, 200, 30),
+                            new Obstacle(900, 385, 150, 30),
+                            new Obstacle(450, 385, 400, 30),
+                        ],
+                        invisibleObstacle: [
+                            new InvisibleObstacle(70, 150, 60, 120),
+                            new InvisibleObstacle(120, 180, 110, 60),
+                            new InvisibleObstacle(225, 150, 50, 120),
+                            new InvisibleObstacle(427, 178, 176, 150),
+                            new InvisibleObstacle(400, 215, 20, 20),
+                            new InvisibleObstacle(400, 275, 20, 20),
+                            new InvisibleObstacle(460, 330, 190, 60),
+                            new InvisibleObstacle(450, 150, 120, 20),
+                            new InvisibleObstacle(600, 210, 40, 180),
+                            new InvisibleObstacle(675, 300, 25, 90),
+                            new InvisibleObstacle(775, 30, 100, 150),
+                            new InvisibleObstacle(750, 67, 20, 20),
+                            new InvisibleObstacle(880, 67, 20, 20),
+                            new InvisibleObstacle(950, 100, 25, 90),
+                            new InvisibleObstacle(150, 590, 50, 90),
+                            new InvisibleObstacle(350, 476, 25, 90),
+                            new InvisibleObstacle(375, 625, 52, 120),
+                            new InvisibleObstacle(575, 475, 52, 120),
+                            new InvisibleObstacle(430, 715, 20, 20),
+                            new InvisibleObstacle(550, 560, 20, 20),
+                            new InvisibleObstacle(550, 740, 76, 30)
+                        ],
+                        items: [],
+                        lasers: []
+                    },
+                    {
+                        obstacles: [
+                            new Obstacle(0, 0, 1000, 20),
+                            new Obstacle(0, 0, 20, 800),
+                            new Obstacle(0, 780, 1000, 20),
+                            new Obstacle(980, 0, 20, 800),
+                            new Obstacle(295, 0, 20, 85),
+                            new Obstacle(295, 150, 20, 260),
+                            new Obstacle(295, 450, 20, 205),
+                            new Obstacle(530, 0, 20, 85),
+                            new Obstacle(530, 150, 20, 500),
+                            new Obstacle(390, 650, 20, 140),
+                            new Obstacle(510, 650, 20, 140),
+                            new Obstacle(855, 167, 20, 44),
+                            new Obstacle(855, 245, 20, 86),
+                            new Obstacle(855, 365, 20, 86),
+                            new Obstacle(855, 485, 20, 86),
+                            new Obstacle(855, 605, 20, 40),
+                            new Obstacle(0, 230, 40, 20),
+                            new Obstacle(120, 230, 290, 20),
+                            new Obstacle(500, 230, 40, 20),
+                            new Obstacle(0, 505, 160, 20),
+                            new Obstacle(225, 505, 90, 20),
+                            new Obstacle(295, 635, 125, 20),
+                            new Obstacle(550, 160, 325, 20),
+                            new Obstacle(550, 280, 325, 20),
+                            new Obstacle(550, 405, 325, 20),
+                            new Obstacle(550, 520, 325, 20),
+                            new Obstacle(520, 635, 385, 20),
+                            new Obstacle(970, 635, 30, 20)
+                        ],
+                        invisibleObstacle: [
+                            new InvisibleObstacle(350, 60, 150, 35),
+                            new InvisibleObstacle(35, 560, 105, 65),
+                            new InvisibleObstacle(320, 285, 70, 90),
+                            new InvisibleObstacle(340, 460, 50, 90),
+                            new InvisibleObstacle(550, 180, 85, 105),
+                            new InvisibleObstacle(550, 305, 85, 105),
+                            new InvisibleObstacle(550, 430, 85, 105),
+                            new InvisibleObstacle(550, 555, 85, 105),
+                            new InvisibleObstacle(575, 700, 300, 100),
+                            new InvisibleObstacle(110, 440, 70, 70)
+                        ],
+                        items: [],
+                        lasers: []
+                    }
+                ];
+            }
+
+            checkObstacleCollision(x, y, width, height, obstacles) {
+                for (const obstacle of obstacles) {
+                    if (obstacle.collidesWith(x, y, width, height)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            generateItems(numItems, size, levelData) {
+                const items = [];
+                const obstacles = levelData.obstacles || [];
+                const invisibleObstacles = levelData.invisibleObstacle || [];
+                
+                for (let i = 0; i < numItems; i++) {
+                    let validPosition = false;
+                    let x, y;
+                    
+                    while (!validPosition) {
+                        x = Math.floor(Math.random() * 900) + 50;
+                        y = Math.floor(Math.random() * 700) + 50;
+                        
+                        if (this.checkObstacleCollision(x, y, size, size, obstacles)) {
+                            continue;
+                        }
+                        
+                        if (this.checkObstacleCollision(x, y, size, size, invisibleObstacles)) {
+                            continue;
+                        }
+                        
+                        validPosition = true;
+                        items.push(new Item(x, y, size, size));
+                    }
+                }
+                
+                return items;
+            }
+
+            update() {
+                if (this.showInstructions || this.showFirstScreen) {
+                    return;
+                }
+                
+                const currentLevelData = this.levels[this.currentLevel];
+                
+                // Move the player
+                this.player.move(
+                    this.keys,
+                    currentLevelData.obstacles,
+                    currentLevelData.items,
+                    currentLevelData.invisibleObstacle,
+                    this.width,
+                    this.height
+                );
+                
+                // Check laser collisions
+                for (const laser of currentLevelData.lasers || []) {
+                    if (laser.collidesWith(this.player.x, this.player.y, this.player.width, this.player.height)) {
+                        console.log("Player hit a laser! Restarting level.");
+                        this.restartLevel();
+                    }
+                }
+                
+                // Check level completion
+                if (currentLevelData.items.length === 0) {
+                    console.log(`Level ${this.currentLevel + 1} completed!`);
+                    if (this.currentLevel < this.levels.length - 1) {
+                        this.currentLevel++;
+                        this.player.inventory = [];
+                        this.player.x = 40;
+                        this.player.y = 680;
+                    }
+                }
+            }
+
+            restartLevel() {
+                console.log("Restarting level...");
+                this.player.x = 40;
+                this.player.y = 680;
+                this.player.inventory = [];
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                
+                if (this.showFirstScreen) {
+                    if (this.firstScreenImage.complete) {
+                        this.ctx.drawImage(this.firstScreenImage, 0, 0, this.width, this.height);
+                    } else {
+                        this.ctx.fillStyle = '#FF0000';
+                        this.ctx.fillRect(0, 0, this.width, this.height);
+                    }
+                } else if (this.showInstructions) {
+                    if (this.instructionScreenImage.complete) {
+                        this.ctx.drawImage(this.instructionScreenImage, 0, 0, this.width, this.height);
+                    } else {
+                        this.ctx.fillStyle = '#00FF00';
+                        this.ctx.fillRect(0, 0, this.width, this.height);
+                    }
+                } else {
+                    // Draw background
+                    if (this.backgroundImages[this.currentLevel] && this.backgroundImages[this.currentLevel].complete) {
+                        this.ctx.drawImage(this.backgroundImages[this.currentLevel], 0, 0, this.width, this.height);
+                    } else {
+                        this.ctx.fillStyle = '#FFFFFF';
+                        this.ctx.fillRect(0, 0, this.width, this.height);
+                    }
+                    
+                    const currentLevelData = this.levels[this.currentLevel];
+                    
+                    // Draw game elements
+                    // Uncomment to see obstacles (debug mode)
+                    /*
+                    for (const obstacle of currentLevelData.obstacles) {
+                        obstacle.draw(this.ctx);
+                    }
+                    
+                    for (const invObs of currentLevelData.invisibleObstacle) {
+                        this.ctx.globalAlpha = 0.3;
+                        invObs.draw(this.ctx);
+                        this.ctx.globalAlpha = 1.0;
+                    }
+                    */
+                    
+                    for (const item of currentLevelData.items) {
+                        item.draw(this.ctx);
+                    }
+                    
+                    for (const laser of currentLevelData.lasers || []) {
+                        laser.draw(this.ctx);
+                    }
+                    
+                    this.player.draw(this.ctx);
+                    
+                    // Draw UI
+                    this.ctx.fillStyle = '#000000';
+                    this.ctx.font = '20px Arial';
+                    this.ctx.fillText(`Level: ${this.currentLevel + 1}`, 20, 30);
+                    this.ctx.fillText(`Items Collected: ${this.player.inventory.length}`, 20, 60);
+                    this.ctx.fillText(`Items Left: ${currentLevelData.items.length}`, 20, 90);
+                }
+            }
+
+            gameLoop(timestamp) {
+                // Calculate delta time
+                const deltaTime = timestamp - this.lastTime;
+                this.lastTime = timestamp;
+                
+                // Update game state
+                this.update();
+                
+                // Render game
+                this.draw();
+                
+                // Continue game loop if game is running
+                if (this.running) {
+                    requestAnimationFrame(this.gameLoop.bind(this));
+                }
+            }
+        }
+
+        // Initialize game when page loads
+        window.onload = function() {
+            // Generate items for each level
+            const game = new Game();
+            
+            // Generate items for each level
+            for (let i = 0; i < game.levels.length; i++) {
+                game.levels[i].items = game.generateItems(50, 20, game.levels[i]);
+            }
+        };
+    </script>
+</body>
+</html>
